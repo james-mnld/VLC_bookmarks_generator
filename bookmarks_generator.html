@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Bookmarks Generator</title>
+</head>
+
+<style>
+</style>
+
+<body style="font-family: sans-serif">
+	<h1>Bookmarks Generator</h1>
+	<p>
+	   Instructions: Use the "Timestamp" doc(x) file to fill up the form, then <b>download</b> the xspf file.
+	</p>
+	<form>
+		<fieldset>
+        <p>
+          <label>File name: </label>
+          <input type = "text"
+                 id = "file-name"
+                 placeholder = "File name"
+                 value = "" />.mp4
+        </p>
+        <div id = "timestamps">
+	        <p id = "t1">
+	          <label>Timestamp 1: </label>
+	          <input type = "text"
+                 id = "t1-description"
+                 placeholder = "Description" /> -
+								 <!-- value=""
+								 onchange="updateValue('ti-description', this.value)" /> - -->
+	          <input type = "number"
+                 id = "t1-mm"
+                 min = "00"
+                 max = "59"
+                 value= "00"
+                 placeholder = "mm"
+                 maxlength = "2"
+                 oninput="this.value=this.value.slice(0,this.maxLength)" /> :
+	          <input type="number"
+                 id = "t1-ss"
+                 min = "00"
+                 max = "59"
+                 value= "00"
+                 placeholder = "ss"
+                 maxlength = "2"
+                 oninput="this.value=this.value.slice(0,this.maxLength)" /> .
+	           <input type="number"
+                 id = "t1-ms"
+                 min = "000"
+                 max = "999"
+                 value= "000"
+                 placeholder = "ms"
+                 maxlength = "3"
+                 oninput="this.value=this.value.slice(0,this.maxLength)" />
+	        </p>
+        </div>
+
+        <div id = "autostop" style="display: none">
+        	<p>
+        		<label>Stop time: </label>
+		        <input type = "number"
+			        	id = "autostop-mm"
+			        	min = "00"
+		            max = "59"
+		            value= "00"
+		            placeholder = "mm"
+		            maxlength = "2"
+		            oninput="this.value=this.value.slice(0,this.maxLength)" /> :
+		        <input type="number"
+		            id = "autostop-ss"
+		            min = "00"
+		            max = "59"
+		            value= "00"
+		            placeholder = "ss"
+		            maxlength = "2"
+		            oninput="this.value=this.value.slice(0,this.maxLength)" /> .
+		        <input type="number"
+		            id = "autostop-ms"
+		            min = "000"
+		            max = "999"
+		            value= "000"
+		            placeholder = "ms"
+		            maxlength = "3"
+	              oninput="this.value=this.value.slice(0,this.maxLength)" />
+        	</p>
+        </div>
+
+		<button id="button-timestamp-add" onclick="addTimeStamp(event)">Add timestamp</button>
+		<br><br>
+		<button id="button-timestamp-remove" onclick="removeTimeStamp(event)" disabled>Remove last timestamp</button>
+
+		<br><br>
+		<button id="button-autostop" onclick="toggleAutoStop(event)">Add autostop</button>
+
+		</fieldset>
+	</form>
+
+	<div>
+		<br>
+		<button onclick="download()">Download</button>
+		<p id = "message" style="color:red;">
+		</p>
+	</div>
+
+	<script>
+	    var timestamp_count = 1;
+
+			function updateValue(id, val) {
+				 document.getElementById(id).value = val;
+			}
+
+	    function addTimeStamp(event) {
+				for (var c of document.getElementsByTagName("input"))
+    			c.setAttribute("value", c.value);
+
+        var tnum = timestamp_count + 1;
+        var str_template = `
+					<p id = "t${tnum}">
+        		<label>Timestamp ${tnum}: </label>
+        		<input type = "text"
+               		id = "t${tnum}-description"
+               		placeholder = "Description" /> -
+        		<input type = "number"
+               		id = "t${tnum}-mm"
+               		min = "00"
+               		max = "59"
+               		value= "00"
+               		placeholder = "mm"
+               		maxlength = "2"
+               		oninput="this.value=this.value.slice(0,this.maxLength)" /> :
+        		<input type="number"
+               		id = "t${tnum}-ss"
+               		min = "00"
+               		max = "59"
+               		value= "00"
+               		placeholder = "ss"
+               		maxlength = "2"
+               		oninput="this.value=this.value.slice(0,this.maxLength)" /> .
+         		<input type="number"
+               		id = "t${tnum}-ms"
+               		min = "000"
+               		max = "999"
+               		value= "000"
+               		placeholder = "ms"
+               		maxlength = "3"
+               		oninput="this.value=this.value.slice(0,this.maxLength)" />
+      		</p>
+					`;
+        timestamp_count += 1;
+        document.getElementById("timestamps").innerHTML += str_template;
+
+				if (timestamp_count > 1)
+					document.getElementById("button-timestamp-remove").disabled = false;
+
+        event.preventDefault();
+	    }
+
+			function removeTimeStamp(event) {
+				document.getElementById(`t${timestamp_count}`).remove();
+				timestamp_count -= 1;
+
+				if (timestamp_count == 1)
+					document.getElementById("button-timestamp-remove").disabled = true;
+
+				event.preventDefault();
+			}
+
+	    function toggleAutoStop(event) {
+	    	var innerHTML_str = document.getElementById("button-autostop").innerHTML;
+	    	if (innerHTML_str == "Add autostop") {
+	    		document.getElementById("button-autostop").innerHTML = "Remove autostop";
+	    		document.getElementById("autostop").style.display = "block";
+	    	}
+
+	    	if (innerHTML_str == "Remove autostop") {
+	    		document.getElementById("button-autostop").innerHTML = "Add autostop";
+	    		document.getElementById("autostop").style.display = "none";
+	    	}
+	    	event.preventDefault();
+	    }
+
+	    function generateBookmark() {
+	    	var file_name = document.getElementById("file-name").value;
+	    	if (!file_name.includes(".mp4"))
+	    		file_name += ".mp4";
+
+	    	// var start_time = "";
+
+	    	var hasAutostop = false;
+	    	var stop_time_str = "";
+	    	var stop_time_mm, stop_time_ss, stop_time_ms, stop_time;
+	    	if (document.getElementById("autostop").style.display == "block") {
+
+	    		stop_time_mm = parseInt(document.getElementById("autostop-mm").value);
+	    		stop_time_ss = parseInt(document.getElementById("autostop-ss").value);
+	    		stop_time_ms = parseFloat("0." + document.getElementById("autostop-ms").value);
+	    		stop_time = mmssTosec(stop_time_mm, stop_time_ss) + stop_time_ms;
+
+	    		if (stop_time > 0.) {
+	    			hasAutostop = true;
+	    			stop_time_str = `<vlc:option>stop-time=${stop_time}</vlc:option>`;
+	    		}
+	    	}
+
+	    	var bookmarks = "";
+	    	// var bookmarks = `{name=${asd},time=${asd}}`;
+	    	for (let i=1; i <= timestamp_count; i++) {
+	    		var mm = parseInt(document.getElementById(`t${i}-mm`).value);
+	    		var ss = parseInt(document.getElementById(`t${i}-ss`).value);
+	    		var ms = parseFloat("0." + document.getElementById(`t${i}-ms`).value);
+
+	    		var time = mmssTosec(mm, ss) + ms;
+	    		// console.log(time);
+	    		var desc = document.getElementById(`t${i}-description`).value;
+
+					if (time != 0 && desc != ""){
+						bookmarks += `
+		    			{name=${desc},time=${time}},`;
+					}
+					else
+						continue;
+	    	}
+				bookmarks += "\n";
+	    	var xspf_template = `<?xml version="1.0" encoding="UTF-8"?>
+				<playlist xmlns="http://xspf.org/ns/0/" xmlns:vlc="http://www.videolan.org/vlc/playlist/ns/0/" version="1">
+				<title>Playlist</title>
+				<trackList>
+				<track>
+					<location>${file_name}</location>
+					<extension application="http://www.videolan.org/vlc/playlist/0">
+					<vlc:id>0</vlc:id>
+					<vlc:option>start-time=0.000</vlc:option>
+					${stop_time_str}
+						<vlc:option>bookmarks=
+							${bookmarks}
+						</vlc:option>
+					</extension>
+				</track>
+				</trackList>
+				</playlist>`;
+
+				return xspf_template;
+	    }
+
+	    function download() {
+				var file_name = document.getElementById("file-name").value;
+
+				if (file_name == "") {
+					document.getElementById("message").innerHTML = "Please provide a file name.";
+				}
+				else {
+					document.getElementById("message").innerHTML = "";
+					if (file_name.includes(".mp4"))
+		    		file_name.replace(".mp4", ".xspf");
+					else
+						file_name += ".xspf";
+
+					var bookmarks_str = generateBookmark();
+
+					var element = document.createElement('a');
+			    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(bookmarks_str));
+			    element.setAttribute('download', file_name);
+
+			    element.style.display = 'none';
+			    document.body.appendChild(element);
+
+			    element.click();
+
+			    document.body.removeChild(element);
+				}
+			}
+
+	    function mmssTosec(mm, ss) {
+	    	return 60*mm + ss;
+	    }
+
+	    function hhmmTosec(hh, mm) {
+	    	return 3600*hh + 60*mm;
+	    }
+
+	    function timeStringHHMMtoInt(time_hhmm) {
+	    	var arr = time_hhmm.split(":");
+	    	var hh = parseInt(arr[0]);
+	    	var mm = parseInt(arr[1]);
+	    	var time_int = hhmmTosec(hh, mm);
+	    	return time_int;
+	    }
+
+	    function getFormattedTimeString(tt) {
+	    	if (tt < 10) {
+				tt_str = "0" + tt.toString();
+			} else {
+				tt_str = tt.toString();
+			}
+			return tt_str;
+	    }
+
+	    function timeInttoStringHHMMSS(time_int) { // in sec
+	    	var hh = parseInt(time_int / 3600);
+			var mm = parseInt( (time_int - (3600*hh)) / 60);
+			var ss = time_int % 60;
+
+			if (hh > 12) {
+				hh = hh - 12;
+			}
+			var time_str = getFormattedTimeString(hh) + ":"
+							+ getFormattedTimeString(mm) + ":"
+							+ getFormattedTimeString(ss);
+			return time_str;
+	    }
+
+	</script>
+</body>
+</html>
